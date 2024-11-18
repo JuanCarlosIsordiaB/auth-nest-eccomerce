@@ -34,7 +34,7 @@ export class AuthService {
 
       await this.userRepository.save(user);
 
-      return { ...userWithoutPassword, token: this.getJwtToken({ email: user.email }) };
+      return { ...userWithoutPassword, token: this.getJwtToken({ id: user.id }) };
       //TODO: Regresar el JWT de acceso
     } catch (error) {
       this.handleDBErrors(error);
@@ -46,7 +46,7 @@ export class AuthService {
       const { email, password } = loginUserDto;
       const user = await this.userRepository.findOne({
         where: { email },
-        select: { email: true, password: true },
+        select: { email: true, password: true, id: true },
       });
 
       if(!user ) throw new  UnauthorizedException('Invalid credentials');
@@ -55,7 +55,7 @@ export class AuthService {
 
       return {
         ...user,
-        token: this.getJwtToken({ email: user.email }),
+        token: this.getJwtToken({ id: user.id }),
       };
 
     } catch (error) {}
