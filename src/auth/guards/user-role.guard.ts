@@ -1,6 +1,12 @@
-import { BadRequestException, CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
+import { META_ROLES } from '../decorators';
 
 @Injectable()
 export class UserRoleGuard implements CanActivate {
@@ -10,15 +16,23 @@ export class UserRoleGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const validRoles = this.reflector.get<string[]>(
-      'roles',
+      META_ROLES,
       context.getHandler(),
     );
+
+    if (!validRoles && !validRoles.length) return true;
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    if(!user.roles.includes('admin')) throw new BadRequestException('You are not authorized to access this route');
 
-    console.log({ validRoles });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
 
-    return true;
+    for (const role of user.roles) {
+      if(validRoles.includes(role)) return true;
+    }
+
+    throw new BadRequestException('User does not have the required role');
   }
 }
